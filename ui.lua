@@ -430,7 +430,7 @@ function UI.new(CFG, ICON)
     end
 
     -- ============================================================
-    -- TOGGLE
+    -- TOGGLE (premium switch)
     -- ============================================================
     hub.toggle = function(page_frame, label, desc, icon_id, callback)
         local scroll = ensure_scroll(page_frame)
@@ -442,6 +442,7 @@ function UI.new(CFG, ICON)
         corner(row, 12)
         grad(row, CFG.card_top, CFG.card_bot)
         stroke(row, Color3.fromRGB(45, 45, 60), 1, 0.5)
+
         local bar = new("Frame", {
             Size = UDim2.new(0, 3, 0.55, 0), Position = UDim2.new(0, 0, 0.225, 0),
             BackgroundColor3 = CFG.accent, BorderSizePixel = 0,
@@ -449,6 +450,7 @@ function UI.new(CFG, ICON)
         })
         corner(bar, 2)
         grad(bar, CFG.accent2, CFG.accent_dark)
+
         local ih = new("Frame", {
             Size = UDim2.fromOffset(34, 34), Position = UDim2.new(0, 12, 0.5, -17),
             BackgroundColor3 = CFG.icon_bg, BorderSizePixel = 0,
@@ -460,8 +462,9 @@ function UI.new(CFG, ICON)
             BackgroundTransparency = 1, Image = icon_id or ICON.bolt,
             ImageColor3 = CFG.subtext, ZIndex = 7, Parent = ih,
         })
+
         new("TextLabel", {
-            Size = UDim2.new(1, -150, 0, 16),
+            Size = UDim2.new(1, -170, 0, 16),
             Position = UDim2.fromOffset(58, desc and 10 or 21),
             BackgroundTransparency = 1, Font = Enum.Font.GothamBold,
             TextSize = 12, TextColor3 = CFG.text,
@@ -470,58 +473,117 @@ function UI.new(CFG, ICON)
         })
         if desc then
             new("TextLabel", {
-                Size = UDim2.new(1, -150, 0, 14), Position = UDim2.fromOffset(58, 30),
+                Size = UDim2.new(1, -170, 0, 14), Position = UDim2.fromOffset(58, 30),
                 BackgroundTransparency = 1, Font = Enum.Font.Gotham, TextSize = 10,
                 TextColor3 = CFG.subtext, TextXAlignment = Enum.TextXAlignment.Left,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 Text = desc, ZIndex = 6, Parent = row,
             })
         end
-        local tw, th = 44, 24
+
+        -- PREMIUM SWITCH
+        local tw, th = 54, 26
+        local ks = 22
+        local pad = 2
+
         local track = new("Frame", {
             Size = UDim2.fromOffset(tw, th),
             Position = UDim2.new(1, -tw - 14, 0.5, -th / 2),
-            BackgroundColor3 = Color3.fromRGB(50, 50, 62),
-            BorderSizePixel = 0, ZIndex = 6, Parent = row,
+            BackgroundColor3 = Color3.fromRGB(24, 24, 32),
+            BorderSizePixel = 0,
+            ZIndex = 6, Parent = row,
         })
         corner(track, th / 2)
-        local tglow = stroke(track, CFG.accent, 1, 1)
-        local ks = 20
+
+        local track_grad = grad(track, CFG.accent2, CFG.accent)
+        track_grad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+
+        local track_glow = stroke(track, CFG.accent, 1.5, 1)
+
         local knob = new("Frame", {
             Size = UDim2.fromOffset(ks, ks),
-            Position = UDim2.new(0, 2, 0.5, -ks / 2),
-            BackgroundColor3 = CFG.subtext, BorderSizePixel = 0,
+            Position = UDim2.new(0, pad, 0.5, -ks / 2),
+            BackgroundColor3 = Color3.fromRGB(70, 70, 85),
+            BorderSizePixel = 0,
             ZIndex = 7, Parent = track,
         })
         corner(knob, ks / 2)
+        stroke(knob, Color3.fromRGB(0, 0, 0), 1, 0.7)
+
         local click = new("TextButton", {
             Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
             Text = "", AutoButtonColor = false, ZIndex = 8, Parent = row,
         })
+
         local is_on = false
+
+        local function apply_state(on)
+            TweenService:Create(track,
+                TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { BackgroundColor3 = on and CFG.accent or Color3.fromRGB(24, 24, 32) }
+            ):Play()
+
+            TweenService:Create(track_grad,
+                TweenInfo.new(0.24),
+                {
+                    Transparency = on
+                        and NumberSequence.new({
+                            NumberSequenceKeypoint.new(0, 0.05),
+                            NumberSequenceKeypoint.new(1, 0.15),
+                        })
+                        or NumberSequence.new({
+                            NumberSequenceKeypoint.new(0, 1),
+                            NumberSequenceKeypoint.new(1, 1),
+                        }),
+                }
+            ):Play()
+
+            TweenService:Create(track_glow,
+                TweenInfo.new(0.24),
+                { Transparency = on and 0.15 or 1 }
+            ):Play()
+
+            TweenService:Create(knob,
+                TweenInfo.new(0.24),
+                { BackgroundColor3 = on and CFG.white or Color3.fromRGB(70, 70, 85) }
+            ):Play()
+
+            TweenService:Create(icon,
+                TweenInfo.new(0.24),
+                { ImageColor3 = on and CFG.accent or CFG.subtext }
+            ):Play()
+
+            TweenService:Create(ih,
+                TweenInfo.new(0.24),
+                { BackgroundColor3 = on and Color3.fromRGB(60, 50, 15) or CFG.icon_bg }
+            ):Play()
+
+            bar.Visible = on
+        end
+
         click.MouseButton1Click:Connect(function()
             is_on = not is_on
+
             local target_pos = is_on
-                and UDim2.new(1, -ks - 2, 0.5, -ks / 2)
-                or  UDim2.new(0, 2, 0.5, -ks / 2)
+                and UDim2.new(1, -ks - pad, 0.5, -ks / 2)
+                or  UDim2.new(0, pad, 0.5, -ks / 2)
+
             TweenService:Create(knob,
-                TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Position = target_pos,
-                  BackgroundColor3 = is_on and CFG.white or CFG.subtext }):Play()
-            TweenService:Create(track, TweenInfo.new(0.18),
-                { BackgroundColor3 = is_on and CFG.accent or Color3.fromRGB(50, 50, 62) }):Play()
-            TweenService:Create(tglow, TweenInfo.new(0.18),
-                { Transparency = is_on and 0.3 or 1 }):Play()
-            TweenService:Create(ih, TweenInfo.new(0.18),
-                { BackgroundColor3 = is_on and Color3.fromRGB(60, 50, 15) or CFG.icon_bg }):Play()
-            TweenService:Create(icon, TweenInfo.new(0.18),
-                { ImageColor3 = is_on and CFG.accent or CFG.subtext }):Play()
-            bar.Visible = is_on
+                TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                { Position = target_pos }
+            ):Play()
+
+            apply_state(is_on)
+
             if callback then
                 local ok, err = pcall(callback, is_on)
                 if not ok then warn("[Veil/ui] toggle error: " .. tostring(err)) end
             end
         end)
+
         bump_canvas(scroll)
         return row
     end
@@ -771,7 +833,6 @@ function UI.new(CFG, ICON)
 
         local selected = default_val or options[1]
 
-        -- floating option list
         local list_h = math.min(#options * 26 + 8, 200)
         local list = new("Frame", {
             Size = UDim2.fromOffset(180, 0),
@@ -951,5 +1012,3 @@ function UI.new(CFG, ICON)
     select_page("Home")
     return hub
 end
-
-return UI
