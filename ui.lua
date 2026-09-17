@@ -1,10 +1,3 @@
---[[
-    VeilHub — ui.lua v0.0.1
-    Universal UI framework. Final. Never needs editing again.
-    API: hub.stat, hub.status, hub.page, hub.select,
-         hub.toggle, hub.button, hub.slider, hub.dropdown, hub.textbox
-]]
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
